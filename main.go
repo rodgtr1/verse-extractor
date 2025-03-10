@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -110,11 +111,22 @@ func verseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set plain text content type
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	// Set JSON content type
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	// Write verse as plain text
-	w.Write([]byte(verse))
+	// Create a response struct
+	response := struct {
+		Data string `json:"data"`
+	}{
+		Data: verse,
+	}
+
+	// Encode and write JSON response
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error encoding JSON: %v", err), http.StatusInternalServerError)
+		return
+	}
 }
 
 // healthHandler provides a simple health check endpoint
@@ -132,7 +144,7 @@ func main() {
 
 	// Define routes
 	http.HandleFunc("/verse", verseHandler)
-	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/versehealth", healthHandler)
 
 	// Start the server
 	log.Printf("Starting verse extractor service on port %s", port)
